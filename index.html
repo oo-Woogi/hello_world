@@ -2,11 +2,86 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My First Git page Open</title>
+    <title>심플 갤러그 게임</title>
+    <style>
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; color: white; font-family: Arial; }
+        canvas { border: 2px solid #555; background: #050505; }
+    </style>
 </head>
 <body>
-    <h1>Hello My Page</h1>
-    <h2>Welcome</h2>
+    <canvas id="gameCanvas" width="480" height="640"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let player = { x: 225, y: 580, w: 30, h: 30, speed: 7 };
+        let bullets = [];
+        let enemies = [];
+        let score = 0;
+
+        // 적 생성
+        function spawnEnemy() {
+            if (Math.random() < 0.05) {
+                enemies.push({ x: Math.random() * 450, y: -30, w: 30, h: 30, speed: 2 });
+            }
+        }
+
+        // 키 입력 처리
+        let keys = {};
+        document.addEventListener("keydown", (e) => keys[e.code] = true);
+        document.addEventListener("keyup", (e) => keys[e.code] = false);
+
+        function update() {
+            // 플레이어 이동
+            if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+            if (keys["ArrowRight"] && player.x < canvas.width - player.w) player.x += player.speed;
+            if (keys["Space"]) {
+                if (bullets.length < 5) bullets.push({ x: player.x + 12, y: player.y, w: 5, h: 10 });
+                keys["Space"] = false;
+            }
+
+            // 총알 이동
+            bullets.forEach((b, i) => {
+                b.y -= 5;
+                if (b.y < 0) bullets.splice(i, 1);
+            });
+
+            // 적 이동 및 충돌
+            enemies.forEach((e, i) => {
+                e.y += e.speed;
+                if (e.y > canvas.height) enemies.splice(i, 1);
+                
+                bullets.forEach((b, bi) => {
+                    if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
+                        enemies.splice(i, 1);
+                        bullets.splice(bi, 1);
+                        score += 10;
+                    }
+                });
+            });
+
+            spawnEnemy();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 플레이어
+            ctx.fillStyle = "#00ff00";
+            ctx.fillRect(player.x, player.y, player.w, player.h);
+            // 총알
+            ctx.fillStyle = "#ffff00";
+            bullets.forEach(b => ctx.fillRect(b.x, b.y, b.w, b.h));
+            // 적
+            ctx.fillStyle = "#ff0000";
+            enemies.forEach(e => ctx.fillRect(e.x, e.y, e.w, e.h));
+            // 점수
+            ctx.fillStyle = "white";
+            ctx.fillText("Score: " + score, 10, 20);
+            
+            requestAnimationFrame(() => { update(); draw(); });
+        }
+
+        draw();
+    </script>
 </body>
 </html>
